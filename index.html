@@ -3,120 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Payment System</title>
+    <title>QR Code Payment System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        :root {
+        * {
             font-family: 'Inter', sans-serif;
         }
         .pay-again-button {
             line-height: 1.5;
-            height: 48px;
+            height: 28px;
+            width: 100px;
+            border: 1.5px solid #1e40af;
+            border-radius: 9999px;
+        }
+        .thin-bold {
+            font-weight: 600;
         }
         .hidden {
             display: none;
         }
-        #qrPreview {
-            max-width: 300px;
-            max-height: 300px;
+        .avatar-color-1 { background-color: #1e3a8a; }
+        .avatar-color-2 { background-color: #7c2d12; }
+        .avatar-color-3 { background-color: #065f46; }
+        .avatar-color-4 { background-color: #701a75; }
+        .avatar-color-5 { background-color: #831843; }
+        .avatar-color-6 { background-color: #9f1239; }
+        .avatar-color-7 { background-color: #854d0e; }
+        .avatar-color-8 { background-color: #0f766e; }
+        .avatar-color-9 { background-color: #1e40af; }
+        .avatar-color-10 { background-color: #7e22ce; }
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
         }
-        .profile-avatar-text {
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
+        #scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        #scanner-viewport {
+            width: 100%;
+            height: 300px;
+            background-color: #000;
+        }
+        /* Custom styles for receipt */
+        .receipt-container {
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .receipt-divider {
+            border-top: 1px solid #e5e7eb;
+        }
+        .long-upi {
+            word-break: break-all;
+            overflow-wrap: break-word;
+        }
+        .short-divider {
+            width: 60%;
+            margin: 0 auto;
+            border-top: 1px solid #e5e7eb;
+        }
+        /* Custom rupee symbol styling */
+        .rupee-symbol {
+            font-size: 2.5rem;
+            margin-right: 2px;
+            vertical-align: top;
+        }
+        /* Thin text styling for Google ID */
+        .thin-text {
+            font-weight: 300;
+            color: #6b7280;
+            letter-spacing: 0.5px;
+        }
+        /* Animation containers */
+        .animation-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background-color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 50;
+        }
+        .lottie-animation {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen antialiased">
+    <!-- Initial Loading Animation -->
+    <div id="initialLoadingAnimation" class="animation-container">
+        <div class="lottie-animation">
+            <dotlottie-wc src="https://lottie.host/dcfce494-2bbd-463f-8687-271c8fca67d5/Aip7WOgvUE.lottie" style="width: 100%; height: 100%" autoplay loop></dotlottie-wc>
+        </div>
+        <p class="mt-4 text-lg text-gray-700 absolute bottom-10">Loading Payment System...</p>
+    </div>
 
-    <!-- QR Code Scanning Page -->
-    <div id="qrPage" class="max-w-md mx-auto p-4 md:p-6">
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h1 class="text-2xl font-bold text-center mb-6">Scan QR Code</h1>
-            
-            <div class="mb-6">
-                <label for="qrInput" class="block text-sm font-medium text-gray-700 mb-2">Select QR Code from Gallery</label>
-                <input type="file" id="qrInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+    <!-- QR Code Selection Page -->
+    <div id="qrSelectionPage" class="max-w-md mx-auto p-4 md:p-6 bg-white min-h-screen hidden">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-semibold text-gray-800">QR Payment</h1>
+        </header>
+
+        <div class="flex flex-col items-center text-center mb-8">
+            <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
             </div>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-2">Select QR Code</h2>
+            <p class="text-gray-600 mb-6">Choose a QR code from your gallery or scan one to proceed with payment</p>
             
-            <div id="qrPreviewContainer" class="hidden mb-6">
-                <p class="text-sm font-medium text-gray-700 mb-2">QR Code Preview:</p>
-                <img id="qrPreview" class="mx-auto border rounded-lg">
+            <div class="w-full space-y-4">
+                <button id="selectFromGallery" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg shadow transition duration-150">
+                    Select from Gallery
+                </button>
+                <button id="openScanner" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
+                    Scan QR Code
+                </button>
             </div>
-            
-            <div id="qrData" class="hidden mb-6">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Recipient Name</label>
-                        <input type="text" id="recipientNameInput" class="w-full p-2 border border-gray-300 rounded-md" readonly>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">UPI ID</label>
-                        <input type="text" id="upiIdInput" class="w-full p-2 border border-gray-300 rounded-md" readonly>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
-                        <input type="number" id="amountInput" class="w-full p-2 border border-gray-300 rounded-md" min="1">
-                    </div>
-                </div>
-            </div>
-            
-            <button id="confirmPayment" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full shadow-xl transition duration-150 mb-4 pay-again-button hidden">
-                Confirm Payment
-            </button>
-            
-            <p id="errorMessage" class="text-red-500 text-sm mt-2 hidden">Could not read QR code. Please try another image.</p>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg mt-8">
+            <h3 class="font-medium text-gray-700 mb-2">How it works:</h3>
+            <ul class="text-sm text-gray-600 list-disc pl-5 space-y-1">
+                <li>Select a UPI QR code from your gallery</li>
+                <li>Or scan a QR code using your camera</li>
+                <li>Payment details will be automatically extracted</li>
+                <li>You can modify the amount before confirming</li>
+                <li>Get a Google Pay-style receipt after payment</li>
+            </ul>
         </div>
     </div>
 
-    <!-- Receipt Page -->
-    <div id="receiptPage" class="max-w-md mx-auto p-4 md:p-6 overflow-hidden hidden">
-        <div id="receiptContent">
-            <header class="flex justify-between items-center mb-6">
-            </header>
+    <!-- Scanner Page -->
+    <div id="scannerPage" class="max-w-md mx-auto p-4 md:p-6 bg-white min-h-screen hidden">
+        <header class="flex justify-between items-center mb-6">
+            <button id="backFromScanner" class="text-blue-600 font-medium">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 class="text-xl font-semibold text-gray-800">Scan QR Code</h1>
+            <div class="w-6"></div>
+        </header>
 
-            <div class="flex flex-col items-center text-center mb-8">
-                <div id="profileAvatar" onclick="downloadReceipt()" class="w-16 h-16 rounded-full overflow-hidden mb-3 bg-purple-800 flex items-center justify-center shadow-lg cursor-pointer hover:shadow-xl transition duration-150">
-                    <!-- Profile avatar will be dynamically generated -->
-                </div>
+        <div id="scanner-container" class="mb-6">
+            <div id="scanner-viewport"></div>
+            <div id="scanner-overlay" class="rounded-lg"></div>
+        </div>
 
-                <h1 class="text-base font-normal text-gray-500" id="receiptRecipientName">To Shiv Om Om</h1>
-                
-                <p class="text-5xl font-normal text-gray-900 mb-6" id="transactionAmount">
-                    <span class="text-3xl align-top font-normal text-gray-900">₹</span>
-                    <span id="amountDisplay">150</span>
-                </p>
+        <p class="text-center text-gray-600 mb-6">Position the QR code within the frame to scan</p>
+        
+        <div class="w-full">
+            <button id="selectFromGalleryScanner" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
+                Select from Gallery Instead
+            </button>
+        </div>
+    </div>
 
-                <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full shadow-xl transition duration-150 mb-4 pay-again-button">
-                    Pay again
-                </button>
+    <!-- Payment Details Page -->
+    <div id="paymentDetailsPage" class="max-w-md mx-auto p-4 md:p-6 bg-white min-h-screen hidden">
+        <header class="flex justify-between items-center mb-6">
+            <button id="backFromPayment" class="text-blue-600 font-medium">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 class="text-xl font-semibold text-gray-800">Payment Details</h1>
+            <div class="w-6"></div>
+        </header>
+
+        <div class="flex flex-col items-center text-center mb-6">
+            <div id="profileAvatar" class="w-16 h-16 rounded-full overflow-hidden mb-3 flex items-center justify-center shadow-lg">
+                <span id="avatarText" class="text-white text-xl font-semibold"></span>
+            </div>
+            <h1 class="text-base font-normal text-gray-500" id="recipientDisplayName">To</h1>
+            
+            <div class="mt-4 w-full">
+                <label for="amountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                <input type="number" id="amountInput" class="w-full text-3xl font-normal text-center text-gray-900 border-0 focus:ring-0 focus:outline-none" value="150">
             </div>
 
-            <div class="flex flex-col items-center mb-8">
-                <div class="flex items-center text-green-600 font-bold mb-4">
+            <button id="confirmPayment" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-full shadow-xl transition duration-150">
+                Confirm Payment
+            </button>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="font-medium text-gray-700 mb-3">Payment Information:</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Recipient Name:</span>
+                    <span id="recipientName" class="font-medium text-gray-800">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">UPI ID:</span>
+                    <span id="upiIdDisplay" class="font-medium text-gray-800 long-upi">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Transaction Note:</span>
+                    <span id="transactionNote" class="font-medium text-gray-800">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Animation Page -->
+    <div id="successAnimationPage" class="animation-container hidden">
+        <div class="lottie-animation">
+            <dotlottie-wc src="https://lottie.host/95c8cf8d-8616-40a0-ad80-e9dd589c19e3/De7lzF55MJ.lottie" style="width: 50%; height: 20%" autoplay loop></dotlottie-wc>
+        </div>
+        <p class="mt-4 text-lg text-gray-700 absolute bottom-10">Payment Successful!</p>
+    </div>
+
+    <!-- Receipt Page -->
+    <div id="receiptPage" class="max-w-md mx-auto p-4 md:p-6 bg-white min-h-screen hidden">
+        <div id="receiptContent">
+            <header class="flex justify-between items-center mb-4">
+            </header>
+
+            <div class="flex flex-col items-center text-center mb-4">
+                <div id="receiptProfileAvatar" class="w-16 h-16 rounded-full overflow-hidden mb-3 flex items-center justify-center shadow-lg">
+                    <span id="receiptAvatarText" class="text-white text-xl font-semibold"></span>
+                </div>
+
+                <h1 class="text-base font-normal text-gray-500" id="receiptRecipientDisplayName">To</h1>
+                
+                <p class="text-5xl font-normal text-gray-900 mb-4" id="transactionAmount">
+                    <span class="rupee-symbol">₹</span><span id="receiptAmount">150</span>
+                </p>
+
+                <div class="w-full flex justify-center mb-4">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full shadow-xl transition duration-150 pay-again-button">
+                        Pay again
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center mb-4">
+                <div class="flex items-center text-gray-700 font-semibold mb-2">
                     <img src="https://i.postimg.cc/mrYj508R/Gemini-Generated-Image-vwlo8avwlo8avwlo-removebg-preview.png" alt="Completed Tick" class="w-6 h-6 mr-1 object-contain">
                     Completed
                 </div>
 
-                <div class="w-full border-t border-gray-200 mb-4"></div>
+                <div class="short-divider mb-2"></div>
 
-                <p class="text-sm font-normal text-gray-500" id="transactionDate">12 Oct 2025, 11:59 am</p>
+                <p class="text-base font-normal text-gray-500 text-center w-full" id="transactionDate">12 Oct 2025, 11:59 am</p>
             </div>
 
-            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100 mb-8">
+            <div class="receipt-container p-4 sm:p-6 mb-4">
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 flex items-center justify-center bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
                             <img src="https://i.postimg.cc/YqzKKs0j/punjab-national-bank-logo-04.png" alt="PNB Logo" class="w-full h-full object-contain">
                         </div>
                         <div class="text-left">
-                            <p class="text-base font-bold text-black">Punjab National Bank</p>
-                            <p class="text-sm font-bold text-black">8633</p>
+                            <p class="text-lg thin-bold text-black">Punjab National Bank</p>
+                            <p class="text-base thin-bold text-black">8633</p>
                         </div>
                     </div>
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -124,256 +288,387 @@
                     </svg>
                 </div>
 
-                <div class="border-t border-gray-100 my-4"></div>
+                <div class="receipt-divider my-4"></div>
 
                 <div class="space-y-4 text-left">
                     <div>
-                        <p class="text-sm font-bold text-black">UPI transaction ID</p>
-                        <p class="text-base font-normal text-gray-500 cursor-pointer" id="upiIdDisplay" onclick="copyToClipboard('upiIdDisplay')">528583702436</p>
+                        <p class="text-base thin-bold text-black">UPI transaction ID</p>
+                        <p class="text-lg font-normal text-gray-500 cursor-pointer long-upi" id="receiptUpiId" onclick="copyToClipboard(this)">528583702436</p>
                     </div>
 
                     <div>
-                        <p class="text-sm font-bold text-black">To: <span id="receiptToName">SHIV OM</span></p>
-                        <p class="text-base font-normal text-gray-500 cursor-pointer" id="recipientUpiId" onclick="copyToClipboard('recipientUpiId')">
-                            Google Pay • <span id="receiptUpiId">shivom82@oksbi</span>
+                        <p class="text-base thin-bold text-black">To: <span id="receiptToName">SHIV OM</span></p>
+                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptRecipientUpi">
+                            Google Pay • shivom82@oksbi
                         </p>
                     </div>
 
                     <div>
-                        <p class="text-sm font-bold text-black">From: AKASH CHAUDHARI <span class="font-normal text-gray-500">(Punjab National Bank)</span></p>
-                        <p class="text-base font-normal text-gray-500" id="senderName">
+                        <p class="text-base thin-bold text-black">From: AKASH CHAUDHARI <span class="font-normal text-black-500">(Punjab National Bank)</span></p>
+                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptSenderName">
                             Google Pay • akashom53@oksbi
                         </p>
                     </div>
 
                     <div>
-                        <p class="text-sm font-bold text-black">Google transaction ID</p>
-                        <p class="text-base font-normal text-gray-500 cursor-pointer" id="googleTransactionId" onclick="copyToClipboard('googleTransactionId')">CICAgOicg_3vGA</p>
+                        <p class="text-base thin-bold text-black">Google transaction ID</p>
+                        <p class="text-lg font-normal text-gray-500 cursor-pointer long-upi thin-text" id="receiptGoogleId" onclick="copyToClipboard(this)">CICAgOicg_3vGA</p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center space-y-5 pt-6">
+            <div class="flex flex-col items-center space-y-3 pt-2">
                 <div class="flex items-center justify-center">
-                    <img src="https://i.postimg.cc/R05GGMQx/Gemini-Generated-Image-d4rvf2d4rvf2d4rv-removebg-preview.png" alt="Powered by UPI" class="h-12 object-contain">
+                    <img src="https://i.postimg.cc/R05GGMQx/Gemini-Generated-Image-d4rvf2d4rvf2d4rv-removebg-preview.png" alt="Powered by UPI" class="h-14 object-contain">
                 </div>
                 <div class="flex items-center">
-                    <img src="https://i.postimg.cc/3wX1cPnh/Gemini-Generated-Image-tc4m2ytc4m2ytc4m-removebg-preview.png" alt="Google Pay Logo" class="h-14 object-contain">
+                    <img src="https://i.postimg.cc/3wX1cPnh/Gemini-Generated-Image-tc4m2ytc4m2ytc4m-removebg-preview.png" alt="Google Pay Logo" class="h-16 object-contain">
                 </div>
             </div>
         </div>
         
-        <button onclick="goBackToQR()" class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-8 rounded-full shadow-xl transition duration-150">
-            Back to QR Scanner
-        </button>
+        <div class="mt-6 text-center">
+            <button id="goBackButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-full shadow transition duration-150">
+                Go Back
+            </button>
+        </div>
     </div>
-    
+
+    <!-- Hidden file input for gallery selection -->
+    <input type="file" id="fileInput" accept="image/*" class="hidden">
+
     <script>
-        // DOM elements
-        const qrPage = document.getElementById('qrPage');
+        // DOM Elements
+        const qrSelectionPage = document.getElementById('qrSelectionPage');
+        const scannerPage = document.getElementById('scannerPage');
+        const paymentDetailsPage = document.getElementById('paymentDetailsPage');
         const receiptPage = document.getElementById('receiptPage');
-        const qrInput = document.getElementById('qrInput');
-        const qrPreviewContainer = document.getElementById('qrPreviewContainer');
-        const qrPreview = document.getElementById('qrPreview');
-        const qrData = document.getElementById('qrData');
-        const confirmPayment = document.getElementById('confirmPayment');
-        const errorMessage = document.getElementById('errorMessage');
-        
-        const recipientNameInput = document.getElementById('recipientNameInput');
-        const upiIdInput = document.getElementById('upiIdInput');
+        const successAnimationPage = document.getElementById('successAnimationPage');
+        const initialLoadingAnimation = document.getElementById('initialLoadingAnimation');
+        const fileInput = document.getElementById('fileInput');
+        const scannerViewport = document.getElementById('scanner-viewport');
         const amountInput = document.getElementById('amountInput');
+        const confirmPaymentBtn = document.getElementById('confirmPayment');
+        const goBackButton = document.getElementById('goBackButton');
+        
+        // Payment details elements
+        const recipientNameElem = document.getElementById('recipientName');
+        const upiIdDisplayElem = document.getElementById('upiIdDisplay');
+        const transactionNoteElem = document.getElementById('transactionNote');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const avatarText = document.getElementById('avatarText');
+        const recipientDisplayName = document.getElementById('recipientDisplayName');
         
         // Receipt elements
-        const receiptRecipientName = document.getElementById('receiptRecipientName');
-        const amountDisplay = document.getElementById('amountDisplay');
-        const receiptToName = document.getElementById('receiptToName');
+        const receiptAmount = document.getElementById('receiptAmount');
         const receiptUpiId = document.getElementById('receiptUpiId');
-        const upiIdDisplay = document.getElementById('upiIdDisplay');
-        const googleTransactionId = document.getElementById('googleTransactionId');
-        const transactionDate = document.getElementById('transactionDate');
-        const profileAvatar = document.getElementById('profileAvatar');
+        const receiptToName = document.getElementById('receiptToName');
+        const receiptRecipientUpi = document.getElementById('receiptRecipientUpi');
+        const receiptSenderName = document.getElementById('receiptSenderName');
+        const receiptGoogleId = document.getElementById('receiptGoogleId');
+        const receiptProfileAvatar = document.getElementById('receiptProfileAvatar');
+        const receiptAvatarText = document.getElementById('receiptAvatarText');
+        const receiptRecipientDisplayName = document.getElementById('receiptRecipientDisplayName');
         
-        // Handle QR code file selection
-        qrInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+        // Payment data
+        let paymentData = {
+            recipientName: '',
+            upiId: '',
+            amount: '',
+            note: ''
+        };
+        
+        // Scanner variables
+        let scannerStream = null;
+        let scannerCanvas = null;
+        let scannerContext = null;
+        
+        // Track QR code source
+        let qrSource = 'scanner'; // Default to scanner
+        
+        // Event Listeners
+        document.getElementById('selectFromGallery').addEventListener('click', () => fileInput.click());
+        document.getElementById('selectFromGalleryScanner').addEventListener('click', () => fileInput.click());
+        document.getElementById('openScanner').addEventListener('click', openScanner);
+        document.getElementById('backFromScanner').addEventListener('click', () => showPage(qrSelectionPage));
+        document.getElementById('backFromPayment').addEventListener('click', () => showPage(qrSelectionPage));
+        fileInput.addEventListener('change', handleFileSelect);
+        confirmPaymentBtn.addEventListener('click', confirmPayment);
+        goBackButton.addEventListener('click', () => showPage(qrSelectionPage));
+        
+        // Show initial loading animation for 3 seconds, then show main page
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                showPage(qrSelectionPage);
+            }, 3000);
+        });
+        
+        // Function to show a specific page and hide others
+        function showPage(page) {
+            initialLoadingAnimation.classList.add('hidden');
+            qrSelectionPage.classList.add('hidden');
+            scannerPage.classList.add('hidden');
+            paymentDetailsPage.classList.add('hidden');
+            receiptPage.classList.add('hidden');
+            successAnimationPage.classList.add('hidden');
+            
+            page.classList.remove('hidden');
+            
+            // Stop scanner when leaving scanner page
+            if (page !== scannerPage && scannerStream) {
+                stopScanner();
+            }
+        }
+        
+        // Handle file selection from gallery
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
             if (!file) return;
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                qrPreview.src = e.target.result;
-                qrPreviewContainer.classList.remove('hidden');
-                scanQRCode(e.target.result);
+                processQRCode(e.target.result, 'gallery');
             };
             reader.readAsDataURL(file);
-        });
+            
+            // Reset file input
+            event.target.value = '';
+        }
         
-        // Scan QR code and extract data
-        function scanQRCode(dataUrl) {
+        // Process QR code image
+        function processQRCode(imageData, source) {
             const img = new Image();
             img.onload = function() {
+                // Create canvas to draw image
                 const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                const context = canvas.getContext('2d');
                 canvas.width = img.width;
                 canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
+                context.drawImage(img, 0, 0);
                 
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                // Get image data for QR code scanning
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Try to decode QR code
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
                 
                 if (code) {
-                    parseQRData(code.data);
-                    errorMessage.classList.add('hidden');
+                    parseUPIQR(code.data, source);
                 } else {
-                    qrData.classList.add('hidden');
-                    confirmPayment.classList.add('hidden');
-                    errorMessage.classList.remove('hidden');
+                    alert('No QR code found in the image. Please try another image.');
                 }
             };
-            img.src = dataUrl;
+            img.src = imageData;
         }
         
-        // Parse QR code data (UPI format)
-        function parseQRData(qrDataString) {
-            // Reset fields
-            recipientNameInput.value = '';
-            upiIdInput.value = '';
-            amountInput.value = '';
+        // Parse UPI QR code data
+        function parseUPIQR(qrData, source) {
+            qrSource = source;
             
-            // Try to extract data from UPI QR code format
-            // Common format: "upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&cu=INR"
-            const params = new URLSearchParams(qrDataString.split('?')[1]);
+            // UPI QR code format: upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&tn=NOTE
+            const upiMatch = qrData.match(/upi:\/\/pay\?([^]+)/);
             
-            // Extract UPI ID
-            const upiId = params.get('pa');
-            if (upiId) {
-                upiIdInput.value = upiId;
-            }
-            
-            // Extract name
-            const name = params.get('pn');
-            if (name) {
-                recipientNameInput.value = name;
-            }
-            
-            // Extract amount
-            const amount = params.get('am');
-            if (amount) {
-                amountInput.value = amount;
-            }
-            
-            // Show the data form and confirm button
-            qrData.classList.remove('hidden');
-            confirmPayment.classList.remove('hidden');
-        }
-        
-        // Handle confirm payment button
-        confirmPayment.addEventListener('click', function() {
-            if (!amountInput.value || amountInput.value <= 0) {
-                alert('Please enter a valid amount');
+            if (!upiMatch) {
+                alert('This is not a valid UPI QR code.');
                 return;
             }
             
-            // Generate random transaction IDs
-            const randomUTR = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
-            const randomGoogleId = 'CI' + Math.random().toString(36).substring(2, 15).toUpperCase();
+            const params = new URLSearchParams(upiMatch[1]);
             
-            // Get recipient name
-            const recipientName = recipientNameInput.value || 'Shiv Om Om';
+            paymentData = {
+                recipientName: params.get('pn') || 'Unknown',
+                upiId: params.get('pa') || 'Unknown',
+                amount: params.get('am') || '',
+                note: params.get('tn') || 'Payment'
+            };
             
-            // Update receipt with extracted data
-            receiptRecipientName.textContent = 'To ' + recipientName;
-            amountDisplay.textContent = amountInput.value;
-            receiptToName.textContent = recipientName.toUpperCase();
-            receiptUpiId.textContent = upiIdInput.value || 'shivom82@oksbi';
-            upiIdDisplay.textContent = randomUTR;
-            googleTransactionId.textContent = randomGoogleId;
+            // Update UI with extracted data
+            updatePaymentDetailsUI();
             
-            // Update profile avatar with first letter of name
-            updateProfileAvatar(recipientName);
-            
-            // Update transaction date to current date/time
-            const now = new Date();
-            const options = { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
-            transactionDate.textContent = now.toLocaleDateString('en-IN', options);
-            
-            // Switch to receipt page
-            qrPage.classList.add('hidden');
-            receiptPage.classList.remove('hidden');
-        });
+            // Show payment details page
+            showPage(paymentDetailsPage);
+        }
         
-        // Update profile avatar with first letter of name
-        function updateProfileAvatar(name) {
-            // Get first letter of name
-            const firstLetter = name.trim().charAt(0).toUpperCase();
+        // Update payment details UI
+        function updatePaymentDetailsUI() {
+            recipientNameElem.textContent = paymentData.recipientName;
+            upiIdDisplayElem.textContent = paymentData.upiId;
+            transactionNoteElem.textContent = paymentData.note;
             
-            // Clear existing content
-            profileAvatar.innerHTML = '';
+            // Set amount if available from QR code
+            if (paymentData.amount) {
+                amountInput.value = paymentData.amount;
+            }
             
-            // Create and add the text element
-            const textElement = document.createElement('div');
-            textElement.className = 'profile-avatar-text';
-            textElement.textContent = firstLetter;
+            // Set avatar with first letter of recipient name
+            const firstLetter = paymentData.recipientName.charAt(0).toUpperCase();
+            avatarText.textContent = firstLetter;
             
-            profileAvatar.appendChild(textElement);
+            // Set random dark color for avatar
+            const colorClass = `avatar-color-${Math.floor(Math.random() * 10) + 1}`;
+            profileAvatar.className = `w-16 h-16 rounded-full overflow-hidden mb-3 flex items-center justify-center shadow-lg ${colorClass}`;
+            
+            // Update recipient display name
+            recipientDisplayName.textContent = `To ${paymentData.recipientName}`;
+        }
+        
+        // Open scanner
+        function openScanner() {
+            showPage(scannerPage);
+            
+            // Initialize scanner
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(function(stream) {
+                        scannerStream = stream;
+                        scannerViewport.srcObject = stream;
+                        
+                        // Set up canvas for QR code scanning
+                        scannerCanvas = document.createElement('canvas');
+                        scannerContext = scannerCanvas.getContext('2d');
+                        
+                        // Start scanning
+                        scanQRCode();
+                    })
+                    .catch(function(err) {
+                        console.error("Error accessing camera: ", err);
+                        alert("Could not access camera. Please check permissions.");
+                    });
+            } else {
+                alert("Camera access is not supported in this browser.");
+            }
+        }
+        
+        // Stop scanner
+        function stopScanner() {
+            if (scannerStream) {
+                scannerStream.getTracks().forEach(track => track.stop());
+                scannerStream = null;
+            }
+        }
+        
+        // Scan for QR codes
+        function scanQRCode() {
+            if (!scannerStream) return;
+            
+            // Set canvas dimensions to match video
+            if (scannerViewport.videoWidth > 0) {
+                scannerCanvas.width = scannerViewport.videoWidth;
+                scannerCanvas.height = scannerViewport.videoHeight;
+            }
+            
+            // Draw video frame to canvas
+            scannerContext.drawImage(scannerViewport, 0, 0, scannerCanvas.width, scannerCanvas.height);
+            
+            // Get image data for QR code scanning
+            const imageData = scannerContext.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
+            
+            // Try to decode QR code
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                // QR code found, process it
+                parseUPIQR(code.data, 'scanner');
+                stopScanner();
+            } else {
+                // Continue scanning
+                requestAnimationFrame(scanQRCode);
+            }
+        }
+        
+        // Confirm payment and show receipt
+        function confirmPayment() {
+            const amount = amountInput.value;
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+            
+            // Update payment data with entered amount
+            paymentData.amount = amount;
+            
+            // Show success animation first
+            showPage(successAnimationPage);
+            
+            // After 3 seconds, generate and show receipt
+            setTimeout(() => {
+                generateReceipt();
+                showPage(receiptPage);
+            }, 3000);
+        }
+        
+        // Generate receipt with payment data
+        function generateReceipt() {
+            // Set amount
+            receiptAmount.textContent = paymentData.amount;
+            
+            // Generate random UPI transaction ID (12 digits)
+            const upiId = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+            receiptUpiId.textContent = upiId;
+            
+            // Set recipient details
+            receiptToName.textContent = paymentData.recipientName;
+            receiptRecipientUpi.textContent = `Google Pay • ${paymentData.upiId}`;
+            
+            // Generate Google transaction ID based on source
+            const googleId = generateGoogleTransactionId(qrSource);
+            receiptGoogleId.textContent = googleId;
+            
+            // Set avatar with first letter of recipient name
+            const firstLetter = paymentData.recipientName.charAt(0).toUpperCase();
+            receiptAvatarText.textContent = firstLetter;
+            
+            // Use same color class as payment page
+            receiptProfileAvatar.className = profileAvatar.className;
+            
+            // Update recipient display name
+            receiptRecipientDisplayName.textContent = `To ${paymentData.recipientName}`;
+            
+            // Set current date and time
+            const now = new Date();
+            const options = { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric' };
+            document.getElementById('transactionDate').textContent = now.toLocaleDateString('en-IN', options);
+        }
+        
+        // Generate Google transaction ID based on source
+        function generateGoogleTransactionId(source) {
+            let prefix;
+            
+            if (source === 'gallery') {
+                prefix = 'CICAgOj';
+            } else if (source === 'scanner') {
+                prefix = 'CICAgOi';
+            } else {
+                // Default case
+                prefix = 'CICAgOi';
+            }
+            
+            // Generate 7 random characters (numbers or alphabets)
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let randomSuffix = '';
+            
+            for (let i = 0; i < 7; i++) {
+                randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            return prefix + randomSuffix;
         }
         
         // Copy to clipboard function
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent || element.innerText;
-            
-            navigator.clipboard.writeText(text).then(function() {
-                // Show a temporary message
+        function copyToClipboard(element) {
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary feedback
                 const originalText = element.textContent;
                 element.textContent = 'Copied!';
-                element.style.color = '#10B981';
-                
-                setTimeout(function() {
+                setTimeout(() => {
                     element.textContent = originalText;
-                    element.style.color = '';
                 }, 1500);
-            }).catch(function(err) {
+            }).catch(err => {
                 console.error('Failed to copy: ', err);
             });
         }
-        
-        // Download receipt as image
-        function downloadReceipt() {
-            const receipt = document.getElementById('receiptContent');
-            
-            html2canvas(receipt, {
-                scale: 3,
-                useCORS: true,
-                allowTaint: true,
-                scrollY: 0,
-                scrollX: 0,
-                logging: true
-            }).then(canvas => {
-                const image = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = image;
-                link.download = 'gpay_receipt_' + new Date().getTime() + '.png'; 
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }).catch(err => {
-                console.error('Error capturing element:', err);
-                alert('Could not download the receipt. Check the console for details.');
-            });
-        }
-        
-        // Go back to QR scanner
-        function goBackToQR() {
-            receiptPage.classList.add('hidden');
-            qrPage.classList.remove('hidden');
-            
-            // Reset form
-            qrInput.value = '';
-            qrPreviewContainer.classList.add('hidden');
-            qrData.classList.add('hidden');
-            confirmPayment.classList.add('hidden');
-            errorMessage.classList.add('hidden');
-        }
     </script>
 </body>
-                        </html>
+</html>
