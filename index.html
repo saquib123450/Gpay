@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Payment System</title>
+    <title>QR Payment System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -135,9 +135,11 @@
             <p class="text-gray-600 mb-6">Choose a QR code from your gallery or scan one to proceed with payment</p>
             
             <div class="w-full space-y-4">
-                <button id="selectFromGallery" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg shadow transition duration-150">
+                <!-- Simple Gallery Button -->
+                <button onclick="openGallery()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg shadow transition duration-150">
                     Select from Gallery
                 </button>
+                
                 <button id="openScanner" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
                     Scan QR Code
                 </button>
@@ -176,7 +178,7 @@
         <p class="text-center text-gray-600 mb-6">Position the QR code within the frame to scan</p>
         
         <div class="w-full">
-            <button id="selectFromGalleryScanner" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
+            <button onclick="openGallery()" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
                 Select from Gallery Instead
             </button>
         </div>
@@ -232,7 +234,7 @@
     <!-- Success Animation Page -->
     <div id="successAnimationPage" class="animation-container hidden">
         <div class="lottie-animation">
-            <dotlottie-wc src="https://lottie.host/95c8cf8d-8616-40a0-ad80-e9dd589c19e3/De7lzF55MJ.lottie" style="width: 50%; height: 20%" autoplay loop></dotlottie-wc>
+            <dotlottie-wc src="https://lottie.host/95c8cf8d-8616-40a0-ad80-e9dd589c19e3/De7lzF55MJ.lottie" style="width: 60%; height: 20%" autoplay loop></dotlottie-wc>
         </div>
         <p class="mt-4 text-lg text-gray-700 absolute bottom-10">Payment Successful!</p>
     </div>
@@ -304,7 +306,7 @@
                     </div>
 
                     <div>
-                        <p class="text-base thin-bold text-black">From: AKASH CHAUDHARI <span class="font-normal text-black-500">(Punjab National Bank)</span></p>
+                        <p class="text-base thin-bold text-black">From: AKASH CHAUDHARI <span class="font-normal text-gray-500">(Punjab National Bank)</span></p>
                         <p class="text-lg font-normal text-gray-500 long-upi" id="receiptSenderName">
                             Google Pay • akashom53@oksbi
                         </p>
@@ -350,6 +352,7 @@
         const amountInput = document.getElementById('amountInput');
         const confirmPaymentBtn = document.getElementById('confirmPayment');
         const goBackButton = document.getElementById('goBackButton');
+        const openScannerBtn = document.getElementById('openScanner');
         
         // Payment details elements
         const recipientNameElem = document.getElementById('recipientName');
@@ -386,13 +389,17 @@
         // Track QR code source
         let qrSource = 'scanner'; // Default to scanner
         
+        // SIMPLE GALLERY FUNCTION - WILL WORK IN SKETCHWARE
+        function openGallery() {
+            console.log("Opening gallery...");
+            fileInput.click();
+        }
+        
         // Event Listeners
-        document.getElementById('selectFromGallery').addEventListener('click', () => fileInput.click());
-        document.getElementById('selectFromGalleryScanner').addEventListener('click', () => fileInput.click());
-        document.getElementById('openScanner').addEventListener('click', openScanner);
+        fileInput.addEventListener('change', handleFileSelect);
+        openScannerBtn.addEventListener('click', openScanner);
         document.getElementById('backFromScanner').addEventListener('click', () => showPage(qrSelectionPage));
         document.getElementById('backFromPayment').addEventListener('click', () => showPage(qrSelectionPage));
-        fileInput.addEventListener('change', handleFileSelect);
         confirmPaymentBtn.addEventListener('click', confirmPayment);
         goBackButton.addEventListener('click', () => showPage(qrSelectionPage));
         
@@ -424,6 +431,8 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
+            console.log("File selected:", file.name);
             
             const reader = new FileReader();
             reader.onload = function(e) {
