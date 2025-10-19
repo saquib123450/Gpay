@@ -26,16 +26,36 @@
         .hidden {
             display: none;
         }
-        .avatar-color-1 { background-color: #1e3a8a; }
-        .avatar-color-2 { background-color: #7c2d12; }
-        .avatar-color-3 { background-color: #065f46; }
-        .avatar-color-4 { background-color: #701a75; }
-        .avatar-color-5 { background-color: #831843; }
-        .avatar-color-6 { background-color: #9f1239; }
-        .avatar-color-7 { background-color: #854d0e; }
-        .avatar-color-8 { background-color: #0f766e; }
-        .avatar-color-9 { background-color: #1e40af; }
-        .avatar-color-10 { background-color: #7e22ce; }
+        .avatar-color-1 {
+            background-color: #1e3a8a;
+        }
+        .avatar-color-2 {
+            background-color: #7c2d12;
+        }
+        .avatar-color-3 {
+            background-color: #065f46;
+        }
+        .avatar-color-4 {
+            background-color: #701a75;
+        }
+        .avatar-color-5 {
+            background-color: #831843;
+        }
+        .avatar-color-6 {
+            background-color: #9f1239;
+        }
+        .avatar-color-7 {
+            background-color: #854d0e;
+        }
+        .avatar-color-8 {
+            background-color: #0f766e;
+        }
+        .avatar-color-9 {
+            background-color: #1e40af;
+        }
+        .avatar-color-10 {
+            background-color: #7e22ce;
+        }
         #scanner-container {
             position: relative;
             width: 100%;
@@ -133,13 +153,11 @@
             </div>
             <h2 class="text-2xl font-semibold text-gray-800 mb-2">Select QR Code</h2>
             <p class="text-gray-600 mb-6">Choose a QR code from your gallery or scan one to proceed with payment</p>
-            
             <div class="w-full space-y-4">
                 <!-- Simple Gallery Button -->
                 <button onclick="openGallery()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg shadow transition duration-150">
                     Select from Gallery
                 </button>
-                
                 <button id="openScanner" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
                     Scan QR Code
                 </button>
@@ -176,7 +194,6 @@
         </div>
 
         <p class="text-center text-gray-600 mb-6">Position the QR code within the frame to scan</p>
-        
         <div class="w-full">
             <button onclick="openGallery()" class="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 shadow-sm transition duration-150">
                 Select from Gallery Instead
@@ -201,7 +218,6 @@
                 <span id="avatarText" class="text-white text-xl font-semibold"></span>
             </div>
             <h1 class="text-base font-normal text-gray-500" id="recipientDisplayName">To</h1>
-            
             <div class="mt-4 w-full">
                 <label for="amountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
                 <input type="number" id="amountInput" class="w-full text-3xl font-normal text-center text-gray-900 border-0 focus:ring-0 focus:outline-none" value="150">
@@ -251,13 +267,12 @@
                 </div>
 
                 <h1 class="text-base font-normal text-gray-500" id="receiptRecipientDisplayName">To</h1>
-                
                 <p class="text-5xl font-normal text-gray-900 mb-4" id="transactionAmount">
                     <span class="rupee-symbol">₹</span><span id="receiptAmount">150</span>
                 </p>
 
                 <div class="w-full flex justify-center mb-4">
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full shadow-xl transition duration-150 pay-again-button">
+                    <button id="payAgainButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full shadow-xl transition duration-150 pay-again-button">
                         Pay again
                     </button>
                 </div>
@@ -300,16 +315,12 @@
 
                     <div>
                         <p class="text-base thin-bold text-black">To: <span id="receiptToName">SHIV OM</span></p>
-                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptRecipientUpi">
-                            Google Pay • shivom82@oksbi
-                        </p>
+                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptRecipientUpi"> Google Pay • shivom82@oksbi </p>
                     </div>
 
                     <div>
                         <p class="text-base thin-bold text-black">From: AKASH CHAUDHARI <span class="font-normal text-gray-500">(Punjab National Bank)</span></p>
-                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptSenderName">
-                            Google Pay • akashom53@okaxis
-                        </p>
+                        <p class="text-lg font-normal text-gray-500 long-upi" id="receiptSenderName"> Google Pay • akashom53@okaxis </p>
                     </div>
 
                     <div>
@@ -328,12 +339,6 @@
                 </div>
             </div>
         </div>
-        
-        <div class="mt-6 text-center">
-            <button id="goBackButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-full shadow transition duration-150">
-                Go Back
-            </button>
-        </div>
     </div>
 
     <!-- Hidden file input for gallery selection -->
@@ -351,7 +356,7 @@
         const scannerViewport = document.getElementById('scanner-viewport');
         const amountInput = document.getElementById('amountInput');
         const confirmPaymentBtn = document.getElementById('confirmPayment');
-        const goBackButton = document.getElementById('goBackButton');
+        const payAgainButton = document.getElementById('payAgainButton');
         const openScannerBtn = document.getElementById('openScanner');
         
         // Payment details elements
@@ -401,7 +406,7 @@
         document.getElementById('backFromScanner').addEventListener('click', () => showPage(qrSelectionPage));
         document.getElementById('backFromPayment').addEventListener('click', () => showPage(qrSelectionPage));
         confirmPaymentBtn.addEventListener('click', confirmPayment);
-        goBackButton.addEventListener('click', () => showPage(qrSelectionPage));
+        payAgainButton.addEventListener('click', () => showPage(qrSelectionPage));
         
         // Show initial loading animation for 3 seconds, then show main page
         window.addEventListener('load', function() {
@@ -418,7 +423,6 @@
             paymentDetailsPage.classList.add('hidden');
             receiptPage.classList.add('hidden');
             successAnimationPage.classList.add('hidden');
-            
             page.classList.remove('hidden');
             
             // Stop scanner when leaving scanner page
@@ -476,14 +480,12 @@
             
             // UPI QR code format: upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&tn=NOTE
             const upiMatch = qrData.match(/upi:\/\/pay\?([^]+)/);
-            
             if (!upiMatch) {
                 alert('This is not a valid UPI QR code.');
                 return;
             }
             
             const params = new URLSearchParams(upiMatch[1]);
-            
             paymentData = {
                 recipientName: params.get('pn') || 'Unknown',
                 upiId: params.get('pa') || 'Unknown',
@@ -588,7 +590,6 @@
         // Confirm payment and show receipt
         function confirmPayment() {
             const amount = amountInput.value;
-            
             if (!amount || parseFloat(amount) <= 0) {
                 alert('Please enter a valid amount.');
                 return;
@@ -643,20 +644,17 @@
         // Generate Google transaction ID based on source
         function generateGoogleTransactionId(source) {
             let prefix;
-            
             if (source === 'gallery') {
                 prefix = 'CICAgOj';
             } else if (source === 'scanner') {
                 prefix = 'CICAgOi';
-            } else {
-                // Default case
+            } else { // Default case
                 prefix = 'CICAgOi';
             }
             
             // Generate 7 random characters (numbers or alphabets)
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let randomSuffix = '';
-            
             for (let i = 0; i < 7; i++) {
                 randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
             }
